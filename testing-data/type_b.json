@@ -24,6 +24,12 @@
         "event": "failed_login"
     },
     {
+        "timestamp": "2026-07-24T09:07:10",
+        "ip": "192.168.1.20",
+        "user": "radii",
+        "event": "failed_login"
+    },
+    {
         "timestamp": "2026-07-24T09:07:30",
         "ip": "192.168.1.20",
         "user": "radii",
@@ -33,6 +39,6 @@
         "timestamp": "2026-07-24T09:09:30",
         "ip": "192.168.1.20",
         "user": "radii",
-        "event": "failed_login"
+        "event": "successful_login"
     }
 ]
