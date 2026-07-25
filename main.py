@@ -1,10 +1,12 @@
 import os 
+import sys
 import argparse
+import json
 
 
 def main():
     path, time, json_format = get_args()
-
+    get_data(path=path)
 
 def get_args():
     parser=argparse.ArgumentParser()
@@ -14,7 +16,15 @@ def get_args():
     args = parser.parse_args()
     return args.input, args.time, args.json
 
-
-
+def get_data(path):
+    try:
+        with open (path, "r") as file:
+            data = json.load(file)
+    except (FileNotFoundError, FileExistsError) as e:
+        print(e)
+        sys.exit(2)
+    except json.decoder.JSONDecodeError as e:
+        print(e)
+        sys.exit(2)
 if __name__== "__main__":
     main()
