@@ -1,11 +1,56 @@
 [
-  {"timestamp": "2026-07-24T09:00:00", "ip": "192.168.1.20", "user": "radii", "event": "successful_login"},
-  {"timestamp": "2026-07-24T09:05:00", "ip": "192.168.1.20", "user": "radii", "event": "failed_login"},
-  {"timestamp": "2026-07-24T09:05:30", "ip": "192.168.1.20", "user": "radii", "event": "successful_login"},
-  {"timestamp": "2026-07-24T09:00:00", "ip": "192.168.1.20", "user": "user", "event": "successful_login"},
-  {"timestamp": "2026-07-24T09:05:00", "ip": "192.168.1.20", "user": "user", "event": "failed_login"},
-  {"timestamp": "2026-07-24T09:05:30", "ip": "192.168.1.20", "user": "user", "event": "successful_login"},
-  {"timestamp": "2026-07-24T09:00:00", "ip": "192.168.1.20", "user": "admin", "event": "successful_login"},
-  {"timestamp": "2026-07-24T09:05:00", "ip": "192.168.1.20", "user": "admin", "event": "failed_login"},
-  {"timestamp": "2026-07-24T09:05:30", "ip": "192.168.1.20", "user": "admin", "event": "successful_login"}
+  {
+    "timestamp": "2026-07-24T09:00:00",
+    "ip": "192.168.1.20",
+    "user": "radii",
+    "event": "successful_login"
+  },
+  {
+    "timestamp": "2026-07-24T09:05:00",
+    "ip": "192.168.1.20",
+    "user": "radii",
+    "event": "failed_login"
+  },
+  {
+    "timestamp": "2026-07-24T09:05:30",
+    "ip": "192.168.1.20",
+    "user": "radii",
+    "event": "successful_login"
+  },
+  {
+    "timestamp": "2026-07-24T09:00:00",
+    "ip": "192.168.1.20",
+    "user": "user",
+    "event": "successful_login"
+  },
+  {
+    "timestamp": "2026-07-24T09:05:00",
+    "ip": "192.168.1.20",
+    "user": "user",
+    "event": "failed_login"
+  },
+  {
+    "timestamp": "2026-07-24T09:05:30",
+    "ip": "192.168.1.20",
+    "user": "user",
+    "event": "successful_login"
+  },
+  {
+    "timestamp": "2026-07-24T09:00:00",
+    "ip": "192.168.1.20",
+    "user": "admin",
+    "event": "successful_login"
+  },
+  {
+    "timestamp": "2026-07-24T09:05:00",
+    "ip": "192.168.1.20",
+    "user": "admin",
+    "event": "failed_login"
+  },
+  {
+    "timestamp": "2026-07-24T09:05:30",
+    "ip": "192.168.1.20",
+    "user": "admin",
+    "event": "successful_login"
+  }
 ]
