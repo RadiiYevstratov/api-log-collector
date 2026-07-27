@@ -10,7 +10,7 @@ def main():
     path, window, json_format = get_args()
     data = get_data(path=path)
     data = validate(data=data)
-
+    analyze(data=data, time_window=window)
 
 def get_args():
     parser=argparse.ArgumentParser()
@@ -39,10 +39,11 @@ def get_data(path):
 
 
 def validate(data):
+
     EVENT_TYPES = ["successful_login", "failed_login"]
-    CHECK_LOGS_BY_IP = [{}]
+    CHECK_LOGS_BY_IP = []
+
     for l in data:
-        ip_dict = {}
         if type(l) is not dict:
             print("not dict")
             sys.exit(2)
@@ -79,6 +80,41 @@ def check_ip(ip, time, event, logs):
             return logs
     logs.append({ip: [[time, event]]})
     return logs
+
+def analyze(data, time_window):
+    for d in data:
+        failed_count = 0
+        error_type = None
+        for key, values in d.items():
+
+            for i, value in enumerate(values):
+
+                time = value[0]
+                event =  value[1]
+
+                j = i
+                max_time = None
+                failed_attempts = 0
+                finishing_time = time + timedelta(minutes=time_window)
+                while j < len(values) and values[j][0] < finishing_time:
+
+                    if max_time is None or values[j][0] > max_time:
+                        max_time = values[j][0]
+                    j+= 1
+
+                    if event == "failed_login":
+                        failed_count += 1
+                    if failed_count >= 5 and event == "successful_login":
+                        error_type = "Type B"
+                        failed_count = 0
+                    elif failed_count >= 5 and event != "successful_login":
+                        error_type = "Type A"
+                    elif failed_count < 5 and event == "successful_login":
+                        failed_count = 0
+
+        print(error_type)
+
+
 
 
 
