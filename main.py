@@ -45,7 +45,7 @@ def validate(data):
 
     for l in data:
         if type(l) is not dict:
-            print("not dict")
+            print("There is an elemnt in the file, which is not a dictionary type or JSON format.")
             sys.exit(2)
 
         elif len(l) != 4:
@@ -55,7 +55,7 @@ def validate(data):
         else:
             for key, value in l.items():
                 if key == "event" and value not in EVENT_TYPES:
-                    print("bad event ttype")
+                    print(f"{value} is unknown event type.")
                     sys.exit(2)
                     
                 elif key == "timestamp":
@@ -73,14 +73,13 @@ def validate(data):
 
 def check_ip(ip, time, event, username, logs):
     for d in logs:
-        if  ip in d["ip"]:
+        if ip == d["ip"]:
             d["event"].append([time, event])
+            d["event"].sort(key=lambda event: event[0])
+
             if username not in d["user"]:
                 d["user"].append(username)
 
-            for d in logs:
-                for ip, events in d.items():
-                    d["event"].sort(key=lambda event: event[0])
             return logs
     logs.append({"ip": ip, "event": [[time, event]], "user": [username]})
 
@@ -91,42 +90,71 @@ def analyze(data, time_window):
     type_b = []
     type_a = []
     for d in data:
-        failed_count = 0
-        error_type = None
         ip = d["ip"]
         events = d["event"]
         users = d["user"]
-        print(ip)
-        print(events)
-        print(users)
-        # for key, values in d.items():    
-        #         for i, value in enumerate(values):
-        #             time = value[0]
-        #             event =  value[1]
 
-        #             j = i
-        #             max_time = None
-        #             finishing_time = time + timedelta(minutes=time_window)
-        #             while j < len(values) and values[j][0] < finishing_time:
+    
+        for i, value in enumerate(events):
+            time = value[0]
+            event =  value[1]
 
-        #                 if max_time is None or values[j][0] > max_time:
-        #                     max_time = values[j][0]
-        #                 j+= 1
+            j = i
+            max_time = None
+            finishing_time = time + timedelta(minutes=time_window)
+            failed_count = 0
+            while j < len(events) and events[j][0] < finishing_time:
 
-        #                 if event == "failed_login":
-        #                     failed_count += 1
-        #                 if failed_count >= 5 and event == "successful_login":
-        #                     error_type = "Type B"
-        #                     type_b.append({"ip": key, "failed": failed_count, "users": d["user"]})
-        #                     failed_count = 0
-        #                 elif failed_count >= 5 and event != "successful_login":
-        #                     error_type = "Type A"
-        #                 elif failed_count < 5 and event == "successful_login":
-        #                     failed_count = 0
+                event = events[j][1]
+                if event == "failed_login":
+                    failed_count += 1
+
+                    if failed_count > 4:
+                        if not in_type(type_a, ip) and not in_type(type_b, ip):
+                            type_a.append({"ip": ip, "failed": failed_count, "users": users})
+
+                        if in_type(type_a, ip) and not in_type(type_b, ip):
+                            for i in type_a:
+                                    if ip == i["ip"]:
+                                        if failed_count > i["failed"]:
+                                            i["failed"]=failed_count
+
+                if event == "successful_login" and failed_count > 4:
+                    if in_type(type_a, ip) and not in_type(type_b, ip):
+                        for i in type_a:
+                                if ip == i["ip"]:
+                                    type_b.append({"ip": ip, "failed": failed_count, "users": users})
+                                    type_a.remove(i)
+                    
+                    if not in_type(type_a, ip) and  in_type(type_b, ip):
+                        for i in type_b:
+                                if ip == i["ip"]:
+                                    if failed_count > i["failed"]:
+                                        i["failed"]=failed_count
+                    failed_count = 0
 
 
+                if max_time is None or events[j][0] > max_time:
+                    max_time = events[j][0]
+                j+= 1
+    for i in type_b:
+        print(i, "b")
+    for i in type_a:
+        print(i, "a")
 
 
+def in_type(type_list, ip_target):
+    for d in type_list:
+        if ip_target == d["ip"]:
+            return True
+
+    return False
+
+def move_to_typeB(type_a, type_b, ip_target):
+    for i, d in enumerate(type_a):
+        if ip_target in d["ip"]:
+            type_b.append(d)
+            type_a.remove(d)
 
 
 
