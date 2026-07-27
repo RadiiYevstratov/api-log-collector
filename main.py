@@ -9,8 +9,10 @@ from datetime import datetime, timedelta
 def main():
     path, window, json_format = get_args()
     data = get_data(path=path)
+    to_scan = len(data)
     data = validate(data=data)
-    analyze(data=data, time_window=window)
+    type_a, type_b = analyze(data=data, time_window=window)
+    print_result(type_a=type_a, type_b=type_b, to_scan=to_scan)
 
 def get_args():
     parser=argparse.ArgumentParser()
@@ -22,10 +24,6 @@ def get_args():
 
 def get_data(path):
 
-    # if not os.path.isdir(path):
-    #     print(f"Error: '{path}' is not a directory or does not exist.", file=sys.stderr)
-    #     sys.exit(1)
-
     try:
         with open (path, "r") as file:
             data = json.load(file)
@@ -34,6 +32,9 @@ def get_data(path):
         print(e)
         sys.exit(2)
     except PermissionError as e:
+        print(e)
+        sys.exit(2)
+    except FileNotFoundError as e:
         print(e)
         sys.exit(2)
 
@@ -93,19 +94,19 @@ def analyze(data, time_window):
         ip = d["ip"]
         events = d["event"]
         users = d["user"]
-
     
         for i, value in enumerate(events):
             time = value[0]
-            event =  value[1]
 
             j = i
             max_time = None
             finishing_time = time + timedelta(minutes=time_window)
             failed_count = 0
+            last_success = None
             while j < len(events) and events[j][0] < finishing_time:
 
                 event = events[j][1]
+                event_time = events[j][0]
                 if event == "failed_login":
                     failed_count += 1
 
@@ -123,7 +124,7 @@ def analyze(data, time_window):
                     if in_type(type_a, ip) and not in_type(type_b, ip):
                         for i in type_a:
                                 if ip == i["ip"]:
-                                    type_b.append({"ip": ip, "failed": failed_count, "users": users})
+                                    type_b.append({"ip": ip, "failed": failed_count, "users": users, "last_success": event_time})
                                     type_a.remove(i)
                     
                     if not in_type(type_a, ip) and  in_type(type_b, ip):
@@ -131,16 +132,17 @@ def analyze(data, time_window):
                                 if ip == i["ip"]:
                                     if failed_count > i["failed"]:
                                         i["failed"]=failed_count
+                                    if event_time > i["last_success"]:
+                                        i["last_success"]=event_time
+
                     failed_count = 0
 
 
                 if max_time is None or events[j][0] > max_time:
                     max_time = events[j][0]
                 j+= 1
-    for i in type_b:
-        print(i, "b")
-    for i in type_a:
-        print(i, "a")
+
+    return type_a, type_b
 
 
 def in_type(type_list, ip_target):
@@ -156,6 +158,20 @@ def move_to_typeB(type_a, type_b, ip_target):
             type_b.append(d)
             type_a.remove(d)
 
+def print_result(type_a, type_b, to_scan):
+    if type_b != []:
+        print(f"=== TYPE B: SUCCESSFUL LOGIN AFTER BRUTE FORCE ({len(type_b)}) === \n")
+        for d in type_b:
+            print(f"{d["ip"]}:    failed={d["failed"]};    last_success={d["last_success"]};    users={d["users"]}")
+        print("\n")
+    if type_a!= []:
+        print(f"=== TYPE A: BRUTE FORCE ATTEMPTS ({len(type_a)}) === \n")
+        for d in type_a:
+            print(f"{d["ip"]}:    failed={d["failed"]};    users={d["users"]}")
+    print("\n")
+    print("=== SUMMARY ===")
+    print(f"Finding: {len(type_a) + len(type_b)}")
+    print(f"Events processed: {to_scan}")
 
 
 
