@@ -12,7 +12,7 @@ def main():
     to_scan = len(data)
     data = validate(data=data)
     type_a, type_b = analyze(data=data, time_window=window)
-    print_result(type_a=type_a, type_b=type_b, to_scan=to_scan)
+    print_result(type_a=type_a, type_b=type_b, to_scan=to_scan, json_format=json_format)
 
 def get_args():
     parser=argparse.ArgumentParser()
@@ -82,15 +82,17 @@ def check_ip(ip, time, event, username, logs):
                 d["user"].append(username)
 
             return logs
-    logs.append({"ip": ip, "event": [[time, event]], "user": [username]})
 
+    logs.append({"ip": ip, "event": [[time, event]], "user": [username]})
     return logs
 
 def analyze(data, time_window):
 
     type_b = []
     type_a = []
+
     for d in data:
+
         ip = d["ip"]
         events = d["event"]
         users = d["user"]
@@ -102,11 +104,12 @@ def analyze(data, time_window):
             max_time = None
             finishing_time = time + timedelta(minutes=time_window)
             failed_count = 0
-            last_success = None
+
             while j < len(events) and events[j][0] < finishing_time:
 
                 event = events[j][1]
                 event_time = events[j][0]
+
                 if event == "failed_login":
                     failed_count += 1
 
@@ -158,20 +161,26 @@ def move_to_typeB(type_a, type_b, ip_target):
             type_b.append(d)
             type_a.remove(d)
 
-def print_result(type_a, type_b, to_scan):
-    if type_b != []:
-        print(f"=== TYPE B: SUCCESSFUL LOGIN AFTER BRUTE FORCE ({len(type_b)}) === \n")
-        for d in type_b:
-            print(f"{d["ip"]}:    failed={d["failed"]};    last_success={d["last_success"]};    users={d["users"]}")
+def print_result(type_a, type_b, to_scan, json_format):
+    if json_format:
+        if type_a != []:
+            print(json.dumps(type_a, indent=4))
+        if type_b != []:
+            print(json.dumps(type_b, indent=4))
+    else:
+        if type_b != []:
+            print(f"=== TYPE B: SUCCESSFUL LOGIN AFTER BRUTE FORCE ({len(type_b)}) === \n")
+            for d in type_b:
+                print(f"{d["ip"]}:    failed={d["failed"]};    last_success={d["last_success"]};    users={d["users"]}")
+            print("\n")
+        if type_a!= []:
+            print(f"=== TYPE A: BRUTE FORCE ATTEMPTS ({len(type_a)}) === \n")
+            for d in type_a:
+                print(f"{d["ip"]}:    failed={d["failed"]};    users={d["users"]}")
         print("\n")
-    if type_a!= []:
-        print(f"=== TYPE A: BRUTE FORCE ATTEMPTS ({len(type_a)}) === \n")
-        for d in type_a:
-            print(f"{d["ip"]}:    failed={d["failed"]};    users={d["users"]}")
-    print("\n")
-    print("=== SUMMARY ===")
-    print(f"Finding: {len(type_a) + len(type_b)}")
-    print(f"Events processed: {to_scan}")
+        print("=== SUMMARY ===")
+        print(f"Finding: {len(type_a) + len(type_b)}")
+        print(f"Events processed: {to_scan}")
 
 
 
