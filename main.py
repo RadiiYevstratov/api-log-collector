@@ -88,8 +88,6 @@ def check_ip(ip, time, event, username, logs):
 
             return logs
 
-    for d in logs:
-        d["event"].sort(key=lambda event: event[0])
     logs.append({"ip": ip, "event": [[time, event]], "user": [username]})
     return logs
 

@@ -1,5 +1,18 @@
-Auth Event Analyzer - Documentation
+Auth Event Analyzer Documentation
+Table of Contents
 Overview
+Program Workflow
+Detection Logic
+Requirements
+Usage
+Input Format
+Function Documentation
+Attack Classification
+Error Handling
+Exit Codes
+Test Dataset
+Complexity
+1. Overview
 
 Auth Event Analyzer is a Python command-line application that analyzes authentication event logs stored in JSON format. Its primary purpose is to detect potential brute-force attacks by identifying repeated failed login attempts originating from the same IP address.
 
@@ -8,9 +21,9 @@ The application classifies detected attacks into two categories:
 Type A – Brute-force attack detected, but no successful login occurred afterward.
 Type B – Brute-force attack detected, followed by a successful login from the same IP address, indicating a possible account compromise.
 
-The analyzer validates the input file before processing to ensure all records are correctly formatted.
+Before processing the logs, the analyzer validates the input file to ensure every record is correctly formatted.
 
-Program Workflow
+2. Program Workflow
 main()
 │
 ├── get_args()
@@ -29,8 +42,7 @@ main()
 │
 └── print_result()
         Display findings
-
-Detection Logic
+3. Detection Logic
 
 The analyzer processes authentication logs using the following workflow:
 
@@ -41,44 +53,39 @@ Group all events by IP address.
 Sort events chronologically.
 Analyze every possible time window.
 Count consecutive failed login attempts.
-If the number of failures reaches the configured threshold:
-mark the IP as Type A
-If a successful login occurs after the threshold is exceeded:
-convert the finding into Type B
+If the number of failures reaches the configured threshold, classify the IP as Type A.
+If a successful login occurs after the threshold has been reached, convert the finding to Type B.
 Print the results.
-
-Requirements
-Python 3.10+ (or simply Python 3.x if you don't want to specify a minimum version)
-Uses only the Python Standard Library
+4. Requirements
+Python 3.10+
+Uses only the Python Standard Library:
 argparse
 datetime
 json
 sys
-Linux operating system or WSL (Windows Subsystem for Linux)
+Linux or WSL (Windows Subsystem for Linux)
 No third-party Python packages are required.
 JSON authentication logs formatted according to the project specification.
 
-Installation is not required.
+No installation is required.
 
 Run directly with:
 
 python3 main.py <input_file>
-
-Usage
+5. Usage
 python3 main.py INPUT [WINDOW] [--threshold N] [--json]
 Arguments
 Argument	Description	Default
-INPUT	Path to the JSON log file.	Required
-WINDOW	Time window (minutes) used for brute-force detection.	15
---threshold	Minimum number of failed login attempts required to classify an attack.	5
---json	Print findings in JSON format instead of human-readable text.	Disabled
+INPUT	Path to the JSON log file	Required
+WINDOW	Detection time window (minutes)	15
+--threshold	Minimum failed login attempts required to classify an attack	5
+--json	Print findings in JSON format	Disabled
 Examples
 python3 main.py testing-data/type_a.json
 python3 main.py testing-data/type_b.json 10
 python3 main.py testing-data/type_b.json 10 --threshold 8
 python3 main.py testing-data/type_b.json --json
-
-Input Format
+6. Input Format
 
 The application expects a JSON array.
 
@@ -94,27 +101,13 @@ Example:
 
 [
     {
-        "timestamp":"2026-07-24T09:00:00",
-        "ip":"192.168.1.20",
-        "user":"admin",
-        "event":"failed_login"
+        "timestamp": "2026-07-24T09:00:00",
+        "ip": "192.168.1.20",
+        "user": "admin",
+        "event": "failed_login"
     }
 ]
-Command Line Arguments
-python main.py INPUT [WINDOW] [--threshold N] [--json]
-Argument	Description	Default
-INPUT	Path to JSON log file	Required
-WINDOW	Detection window in minutes	15
---threshold	Minimum failed logins considered an attack	5
---json	Output results as JSON	False
-
-Example:
-
-python main.py logs.json
-python main.py logs.json 10
-python main.py logs.json 10 --threshold 8
-python main.py logs.json --json
-Function Documentation
+7. Function Documentation
 main()
 
 Program entry point.
@@ -122,7 +115,7 @@ Program entry point.
 Responsibilities
 Parse command-line arguments.
 Load the JSON file.
-Validate input.
+Validate the input.
 Analyze events.
 Print the final report.
 get_args()
@@ -130,23 +123,18 @@ get_args()
 Reads command-line arguments using argparse.
 
 Returns
-(
-    input_path,
-    window,
-    threshold,
-    json_output
-)
+(input_path, window, threshold, json_output)
 get_data(path)
 
 Loads the JSON input file.
 
 Parameters
 Name	Type	Description
-path	str	Path to JSON file
+path	str	Path to the JSON file
 Returns
 data, number_events
 
-where
+where:
 
 data is the parsed JSON array.
 number_events is the total number of records.
@@ -154,120 +142,77 @@ Errors
 
 The function exits with code 2 if:
 
-file does not exist
-permission denied
-invalid JSON
+the file does not exist,
+permission is denied,
+the JSON is invalid.
 validate(data)
 
 Validates the entire dataset.
 
-Checks include:
+Validation includes:
 
-root element is a list
-every record is a dictionary
-required keys exist
-event type is valid
-timestamp is valid ISO-8601
+Root element is a list.
+Every record is a dictionary.
+Required keys exist.
+Event type is valid.
+Timestamp is a valid ISO-8601 value.
 
 During validation:
 
-timestamps are converted into datetime
-records are grouped by IP address
+timestamps are converted to datetime objects,
+events are grouped by IP address.
 Returns
-[
-    {
-        "ip": "...",
-        "event": [
-            [datetime(...), "failed_login"],
-            ...
-        ],
-        "user": [
-            "admin",
-            "root"
-        ]
-    }
-]
+
+A list grouped by IP address.
+
 check_ip(ip, time, event, username, logs)
 
 Groups authentication events by IP address.
 
 If the IP already exists:
 
-append event
-append username if new
+append the event,
+append the username if it has not been seen before.
 
 Otherwise:
 
-create a new IP record
-
-This reduces the number of structures that must be analyzed later.
-
+create a new IP record.
 analyze(data, time_window, threshold)
 
 Performs brute-force detection.
 
-For every IP:
+For every IP address:
 
-Iterate through each event.
+Iterate through events.
 Create a sliding time window.
 Count consecutive failed logins.
 Reset the counter after a successful login.
-When failures reach the threshold:
+If the threshold is reached:
 create or update a Type A finding.
-If a successful login occurs after the threshold:
-convert the finding into Type B.
+If a successful login occurs afterward:
+convert the finding to Type B.
 Returns
 type_a, type_b
 in_type(type_list, ip_target)
 
-Utility function.
+Utility function that checks whether an IP address already exists in a finding list.
 
 Returns:
 
 True
-
-if the IP already exists in the specified finding list.
-
-Otherwise:
-
 False
 print_result(type_a, type_b, to_scan, json_format)
 
-Displays the final report.
+Prints the final report.
 
-Two output formats are supported:
+Supports two output formats:
 
-Human-readable
-=== TYPE B ===
-
-192.168.1.20:
-failed=6
-last_success=...
-
-=== TYPE A ===
-
-203.0.113.10:
-failed=5
-
-=== SUMMARY ===
-
-Finding: 2
-Events processed: 15
+Human-readable text
 JSON
-[
-    {
-        "ip":"192.168.1.20",
-        "failed":6,
-        "users":[
-            "admin"
-        ],
-        "last_success":"2026-07-24T09:09:30"
-    }
-]
-Attack Classification
+8. Attack Classification
 Type A
 
-A Type A attack is detected when an IP address performs at least the configured number of consecutive failed login attempts within the specified time window without any subsequent successful login.
+A Type A attack is detected when an IP address performs at least the configured number of failed login attempts within the specified time window and no successful login occurs afterward.
 
 Example:
 
@@ -299,7 +244,7 @@ Type B
 
 This may indicate that the attacker successfully guessed valid credentials.
 
-Error Handling
+9. Error Handling
 
 The analyzer performs strict validation and exits with status code 2 whenever invalid input is encountered.
 
@@ -312,16 +257,14 @@ Invalid record	Array element is not an object
 Missing key	Required field is absent
 Unknown event	Event is not failed_login or successful_login
 Invalid timestamp	Timestamp is not valid ISO-8601
-
-Exit Codes
+10. Exit Codes
 Exit Code	Meaning
 0	Program completed successfully and no suspicious activity was detected.
-1	One or more brute-force findings (Type A or Type B) were detected.
+1	One or more Type A or Type B findings were detected.
 2	Invalid input or execution error (invalid JSON, missing file, permission denied, malformed records, invalid timestamp, etc.).
+11. Test Dataset
 
-Test Dataset
-
-The project includes test files covering both normal operation and error handling.
+The project includes test files covering both normal execution and error handling.
 
 Functional Tests
 File	Purpose
@@ -332,8 +275,8 @@ overlap.json	Multiple IPs with different outcomes
 unordered.json	Verify event sorting
 boundary.json	Threshold boundary conditions
 mixed.json	Multiple users and IPs
-success_before.json	Success before failures
-scattered.json	Failures outside the time window
+success_before.json	Successful login before failed attempts
+scattered.json	Failed attempts outside the detection window
 Error Tests
 File	Validation
 empty.json	Empty file
@@ -344,25 +287,19 @@ element_not_dict.json	Invalid element type
 unknown_event.json	Invalid event value
 bad_timestamp.json	Invalid timestamp
 no_permission.json	Permission denied
-Exit Codes
-Exit Code	Meaning
-0	No findings; execution completed successfully
-1	One or more Type A or Type B findings detected
-2	Invalid input or execution error
-Complexity
+12. Complexity
 
 Assuming:
 
 N = total number of authentication events
 M = number of unique IP addresses
-
-Approximate complexity:
-
 Stage	Complexity
 Loading JSON	O(N)
 Validation	O(N)
-Grouping by IP	O(N × M) in the current implementation (linear search per IP)
-Sorting events	O(E log E) per IP, where E is the number of events for that IP
-Attack analysis	Up to O(E²) per IP due to the sliding-window scan from each event
+Grouping by IP	O(N × M) (current implementation uses a linear search)
+Sorting events	O(E log E) per IP
+Attack analysis	Up to O(E²) per IP
 
-For typical authentication logs, this approach performs well, but replacing the list-based IP lookup in check_ip() with a dictionary and using a more efficient sliding-window technique could reduce runtime on very large datasets.
+Where E is the number of events associated with a single IP address.
+
+For typical authentication logs, this implementation performs well. However, replacing the list-based IP lookup in check_ip() with a dictionary and implementing a more efficient sliding-window algorithm would significantly improve performance on very large datasets.
