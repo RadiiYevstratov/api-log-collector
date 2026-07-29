@@ -19,29 +19,29 @@
 
 | ID | File | Args | Expected findings | Exit |
 |---|---|---|---|---|
-| F-01 | clean.json | ` --input testing-data/clean.json ` | 0 findings; events_processed=3; unique_ips=1 | 0 |
-| F-02 | type_a.json | ` --input  testing-data/type_a.json` | 1 finding: type=A, ip=192.168.1.20, failed=6;  events_processed=6 | 1 |
+| F-01 | clean.json | ` testing-data/clean.json ` | 0 findings; events_processed=3; unique_ips=1 | 0 |
+| F-02 | type_a.json | `  testing-data/type_a.json` | 1 finding: type=A, ip=192.168.1.20, failed=6;  events_processed=6 | 1 |
 | F-03 | type_b.json | `--input testing-data/type_b.json` | 1 finding: type=B, ip=192.168.1.20, failed=6, first_success_after=2026-07-24T09:09:30, users=[radii]; events_processed=7 | 1 |
 | F-04 | overlap.json | `--input testing-data/overlap.json`  | 2 findings: type=B ip=203.0.113.45, failed=5, first_success_after=2026-07-24T10:12:00, users=[admin, root], events_processed=11; type=A, ip=198.51.100.7, failed=5, events_processed=5 | 1 |
 | F-05 | unordered.json | `--input testing-data/unordered.json`  | 1 finding: type=B, ip=192.168.1.20, user=[radii], first_success_after=2026-07-24T09:09:30, events_processed=7| 1 |
-| F-06 | boundary.json | ` --input testing-data/boundary.json `  | 1 finding: type=A, ip=203.0.113.10, failed = 5, events_processed=9, 203.0.113.11 (4 failures) → no finding| 1 |
-| F-07 | mixed.json | ` --input testing-data/mixed.json`  | 2 findings: type=A, ip=203.0.113.99, failed=5, events_processed=14; type=A, ip=198.51.100.22, users=[admin, test, guest], failed=6, events_processed=14; 192.168.1.50 → no finding| 1 |
-| F-08 | success_before.json | ` --input testing-data/success_before.json ` | 1 finding: type=A, id=192.168.1.30, failed=5, events_processed=6| 1 |
-| F-09 | success_before.json | ` --input testing-data/scattered.json ` |0 finding: events_processed=6 | 0 |
+| F-06 | boundary.json | ` testing-data/boundary.json `  | 1 finding: type=A, ip=203.0.113.10, failed = 5, events_processed=9, 203.0.113.11 (4 failures) → no finding| 1 |
+| F-07 | mixed.json | ` testing-data/mixed.json`  | 2 findings: type=A, ip=203.0.113.99, failed=5, events_processed=14; type=A, ip=198.51.100.22, users=[admin, test, guest], failed=6, events_processed=14; 192.168.1.50 → no finding| 1 |
+| F-08 | success_before.json | ` testing-data/success_before.json ` | 1 finding: type=A, id=192.168.1.30, failed=5, events_processed=6| 1 |
+| F-09 | success_before.json | ` testing-data/scattered.json ` |0 finding: events_processed=6 | 0 |
 
 ## 3. Error handling tests
 
 | ID | File | Expected stderr message | Exit |
 |---|---|---|---|
 | E-01 | (nonexistent path) | | 2 |
-| E-02 | ` --input testing-data/errors/empty.json ` | json.JSONDecodeError | 2 |
-| E-03 |  ` --input testing-data/errors/malformed.json ` | json.JSONDecodeError | 2 |
-| E-04 |  ` --input testing-data/errors/not_a_list.json ` | TypeError | 2 |
-| E-05 |  ` --input testing-data/errors/missing_key.json `  | KeyError: 'ip'| 2 |
-| E-06 | ` --input testing-data/errors/el_not_dict.json ` | TypeError | 2 |
-| E-07 | ` --input testing-data/errors/unknown_event.json ` | ValueError | 2 |
-| E-08 | ` --input testing-data/errors/bad_timestamp.json ` | ValueError | 2 |
-| E-09 | ` --input testing-data/errors/no_permission.json ` | PermissionError | 2 |
+| E-02 | ` testing-data/errors/empty.json ` | json.JSONDecodeError | 2 |
+| E-03 |  ` testing-data/errors/malformed.json ` | json.JSONDecodeError | 2 |
+| E-04 |  ` testing-data/errors/not_a_list.json ` | TypeError | 2 |
+| E-05 |  ` testing-data/errors/missing_key.json `  | KeyError: 'ip'| 2 |
+| E-06 | ` testing-data/errors/el_not_dict.json ` | TypeError | 2 |
+| E-07 | ` testing-data/errors/unknown_event.json ` | ValueError | 2 |
+| E-08 | ` testing-data/errors/bad_timestamp.json ` | ValueError | 2 |
+| E-09 | ` testing-data/errors/no_permission.json ` | PermissionError | 2 |
 
 | E-01 | (nonexistent path) | ERROR: file not found: <path> | 2 |
 | E-02 | empty.json | ERROR: invalid JSON: <detail> | 2 |

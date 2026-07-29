@@ -7,37 +7,38 @@ from datetime import datetime, timedelta
 
 
 def main():
-    path, window, json_format = get_args()
-    data = get_data(path=path)
-    to_scan = len(data)
+    path, window, threschold, json_format = get_args()
+    data, number_events = get_data(path=path)
     data = validate(data=data)
-    type_a, type_b = analyze(data=data, time_window=window)
-    print_result(type_a=type_a, type_b=type_b, to_scan=to_scan, json_format=json_format)
+    type_a, type_b = analyze(data=data, time_window=window, threshold=threschold)
+    print_result(type_a=type_a, type_b=type_b, to_scan=number_events, json_format=json_format)
 
 def get_args():
     parser=argparse.ArgumentParser()
     parser.add_argument("input", help="Enter a path where are the logs are", type=str)
-    parser.add_argument("window", help="Enter a window of interval you would like to check. (in minutes)", default=10, type=int, nargs="?")
+    parser.add_argument("window", help="Enter a window of interval you would like to check. (in minutes)", default=15, type=int, nargs="?")
+    parser.add_argument("--threshold", help="Enter number of failed attemps for program to identify as atack", default=5, type=int, nargs="?")
     parser.add_argument("--json", help="Return result in json format", action="store_true")
     args = parser.parse_args()
-    return args.input, args.window, args.json
+    return args.input, args.window, args.threshold, args.json
 
 def get_data(path):
 
     try:
         with open (path, "r") as file:
             data = json.load(file)
-        return data
+            number_events = len(data)
+        return data, number_events
+    
     except json.decoder.JSONDecodeError as e:
-        print(e)
+        print(f"ERROR: invalid JSON: {e}", file=sys.stderr)
         sys.exit(2)
     except PermissionError as e:
-        print(e)
+        print(f"ERROR: {e.strerror}: <{e.filename}>", file=sys.stderr)
         sys.exit(2)
     except FileNotFoundError as e:
-        print(e)
+        print(f"ERROR: {e.strerror}: {e.filename}", file=sys.stderr)
         sys.exit(2)
-
 
 def validate(data):
 
@@ -73,6 +74,7 @@ def validate(data):
 
 
 def check_ip(ip, time, event, username, logs):
+
     for d in logs:
         if ip == d["ip"]:
             d["event"].append([time, event])
@@ -86,7 +88,7 @@ def check_ip(ip, time, event, username, logs):
     logs.append({"ip": ip, "event": [[time, event]], "user": [username]})
     return logs
 
-def analyze(data, time_window):
+def analyze(data, time_window, threshold):
 
     type_b = []
     type_a = []
@@ -104,7 +106,9 @@ def analyze(data, time_window):
             max_time = None
             finishing_time = time + timedelta(minutes=time_window)
             failed_count = 0
-
+            error_type = None
+            breach_time = None
+            failed_before_success = 0
             while j < len(events) and events[j][0] < finishing_time:
 
                 event = events[j][1]
@@ -113,37 +117,38 @@ def analyze(data, time_window):
                 if event == "failed_login":
                     failed_count += 1
 
-                    if failed_count > 4:
+                    if failed_count >= threshold:
                         if not in_type(type_a, ip) and not in_type(type_b, ip):
                             type_a.append({"ip": ip, "failed": failed_count, "users": users})
+                            breach_time = event_time
+                            error_type = "A"
 
                         if in_type(type_a, ip) and not in_type(type_b, ip):
-                            for i in type_a:
-                                    if ip == i["ip"]:
-                                        if failed_count > i["failed"]:
-                                            i["failed"]=failed_count
+                            for item in type_a:
+                                    if ip == item["ip"]:
+                                        if failed_count > item["failed"]:
+                                            item["failed"]=failed_count
+                            error_type = "A"
+                            breach_time = event_time
+                            failed_before_success = failed_count
 
-                if event == "successful_login" and failed_count > 4:
-                    if in_type(type_a, ip) and not in_type(type_b, ip):
-                        for i in type_a:
-                                if ip == i["ip"]:
-                                    type_b.append({"ip": ip, "failed": failed_count, "users": users, "last_success": event_time})
-                                    type_a.remove(i)
-                    
-                    if not in_type(type_a, ip) and  in_type(type_b, ip):
-                        for i in type_b:
-                                if ip == i["ip"]:
-                                    if failed_count > i["failed"]:
-                                        i["failed"]=failed_count
-                                    if event_time > i["last_success"]:
-                                        i["last_success"]=event_time
-
+                if event == "successful_login":
                     failed_count = 0
 
 
                 if max_time is None or events[j][0] > max_time:
                     max_time = events[j][0]
                 j+= 1
+            
+            if error_type == "A":
+                for value in events:
+                    if value[0] > breach_time and value[1] == "successful_login":
+                        type_b.append({"ip": ip, "failed": failed_before_success, "users": users, "last_success": value[0]})
+                        item = next((x for x in type_a if x["ip"] == ip), None)
+                        if item is not None:
+                            type_a.remove(item)
+
+                        break
 
     return type_a, type_b
 
@@ -155,11 +160,6 @@ def in_type(type_list, ip_target):
 
     return False
 
-def move_to_typeB(type_a, type_b, ip_target):
-    for i, d in enumerate(type_a):
-        if ip_target in d["ip"]:
-            type_b.append(d)
-            type_a.remove(d)
 
 def print_result(type_a, type_b, to_scan, json_format):
     if json_format:
